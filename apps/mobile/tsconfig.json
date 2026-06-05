@@ -1,0 +1,15 @@
+{
+  "extends": "@khanij/config/tsconfig.base.json",
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-native",
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src", "app", "*.ts", "*.tsx"],
+  "exclude": ["node_modules", ".expo", "dist"]
+}

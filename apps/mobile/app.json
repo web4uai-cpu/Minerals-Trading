@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "Khanij Nexus",
+    "slug": "khanij-nexus",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "khanij",
+    "userInterfaceStyle": "dark",
+    "platforms": ["ios", "android"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.khanijnexus.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0D1117"
+      },
+      "package": "com.khanijnexus.app"
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -39,7 +39,7 @@ Some parts of this system are **intentionally stubbed** because making them real
 | Blockchain anchoring | `AuditAnchor` no-op | Not needed for MVP trust loop |
 | Fraud graph (Neo4j) | interface + SQL heuristics | Full graph DB is post-MVP |
 
-See [`SECURITY.md`](./SECURITY.md) and [`docs/COMPLIANCE.md`](./docs/COMPLIANCE.md) for the full picture.
+See [`SECURITY.md`](./SECURITY.md) and [`CLAUDE.md`](./CLAUDE.md) for the full picture.
 
 ---
 
@@ -97,9 +97,8 @@ cp .env.example .env
 # 3. Start infra (Postgres, Redis, MinIO, Elasticsearch, MongoDB)
 docker compose -f infra/docker-compose.yml up -d
 
-# 4. Run DB migrations + seed
-pnpm --filter api prisma migrate dev
-pnpm --filter api prisma db seed
+# 4. Run DB migrations
+pnpm --filter api db:migrate
 
 # 5. Run everything
 pnpm dev
@@ -119,10 +118,10 @@ pnpm dev
 ```bash
 pnpm dev               # run api + web in watch mode
 pnpm test              # run all tests
-pnpm test:e2e          # Playwright end-to-end
 pnpm lint              # eslint across workspace
 pnpm typecheck         # tsc --noEmit everywhere
-pnpm --filter api prisma migrate dev   # new migration
+pnpm --filter @khanij/api run db:migrate   # new DB migration
+pnpm --filter @khanij/api run db:studio    # Prisma Studio (DB GUI)
 ```
 
 ---
@@ -145,8 +144,7 @@ Start from the sequenced build prompts in `docs/DEV_PROMPT.md`.
 | [`ARCHITECTURE.md`](./ARCHITECTURE.md) | System design, data flow, why each DB |
 | [`SECURITY.md`](./SECURITY.md) | Security model, PII handling, vuln reporting |
 | [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Dev workflow, conventions, Definition of Done |
-| [`docs/COMPLIANCE.md`](./docs/COMPLIANCE.md) | Indian regulatory mapping & verification rules |
-| [`docs/DATA_MODEL.md`](./docs/DATA_MODEL.md) | Entity reference / data dictionary |
+| [`docs/DEV_PROMPT.md`](./docs/DEV_PROMPT.md) | Sequenced build prompts (Foundation → Web/Mobile) |
 | [`CLAUDE.md`](./CLAUDE.md) | Agent context for Claude Code |
 
 ---

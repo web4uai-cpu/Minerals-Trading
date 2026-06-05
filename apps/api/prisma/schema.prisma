@@ -1,0 +1,33 @@
+// Khanij Nexus — Prisma schema
+// Data models are added per build prompt. This file is the datasource/generator
+// root; models accumulate here as each module is built.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Audit Log (cross-cutting, needed from Build 2 onwards) ────────────────
+// Append-only. No DELETE policy. Every state-changing action writes a row.
+model AuditLog {
+  id         String   @id @default(cuid())
+  actor      String   // userId or "system"
+  actorOrgId String?
+  action     String   // e.g. "auth.login", "listing.created"
+  entityType String?
+  entityId   String?
+  beforeHash String?  // SHA-256 of serialised before-state
+  afterHash  String?  // SHA-256 of serialised after-state
+  ip         String?
+  traceId    String?
+  createdAt  DateTime @default(now())
+
+  @@index([actor])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_log")
+}

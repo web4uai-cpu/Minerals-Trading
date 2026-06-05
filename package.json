@@ -1,0 +1,28 @@
+{
+  "name": "khanij-nexus",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-Powered Mines & Minerals Trade, Verification & Arbitration Platform",
+  "author": "Khanij Nexus",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "clean": "turbo run clean",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0"
+  }
+}
