@@ -1,5 +1,18 @@
 import { z } from 'zod';
-import { OrgType, DisputeCategory } from './enums';
+import { OrgType, UserRole, DisputeCategory } from './enums';
+
+// ─── JWT ────────────────────────────────────────────────────────
+
+export const JwtPayloadSchema = z.object({
+  sub: z.string().cuid(),
+  orgId: z.string().cuid(),
+  role: z.nativeEnum(UserRole),
+  email: z.string().email(),
+  iat: z.number().optional(),
+  exp: z.number().optional(),
+});
+
+export type JwtPayload = z.infer<typeof JwtPayloadSchema>;
 
 // ─── Auth ───────────────────────────────────────────────────────
 

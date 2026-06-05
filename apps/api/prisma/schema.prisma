@@ -1,7 +1,3 @@
-// Khanij Nexus — Prisma schema
-// Data models are added per build prompt. This file is the datasource/generator
-// root; models accumulate here as each module is built.
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,8 +7,99 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── Audit Log (cross-cutting, needed from Build 2 onwards) ────────────────
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum OrgType {
+  BUYER
+  SELLER
+  TRADER
+  EXPORTER
+  ARBITRATION_BODY
+}
+
+enum OrgStatus {
+  PENDING
+  VERIFIED
+  SUSPENDED
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  ARBITRATOR
+  ADMIN
+  REGULATOR_READONLY
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
+}
+
+// ─── Organizations ─────────────────────────────────────────────────────────
+
+model Organization {
+  id        String    @id @default(cuid())
+  type      OrgType
+  legalName String
+  gstin     String?   // AES-256-GCM encrypted at rest
+  pan       String?   // AES-256-GCM encrypted at rest
+  state     String
+  status    OrgStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  users         User[]
+  refreshTokens RefreshToken[]
+
+  @@map("organizations")
+}
+
+// ─── Users ─────────────────────────────────────────────────────────────────
+
+model User {
+  id           String     @id @default(cuid())
+  orgId        String
+  email        String     @unique
+  phone        String?    // AES-256-GCM encrypted at rest
+  passwordHash String
+  role         UserRole
+  status       UserStatus @default(ACTIVE)
+  lastLoginAt  DateTime?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  org           Organization  @relation(fields: [orgId], references: [id])
+  refreshTokens RefreshToken[]
+
+  @@index([orgId])
+  @@map("users")
+}
+
+// ─── Refresh Tokens ────────────────────────────────────────────────────────
+
+model RefreshToken {
+  id                String    @id @default(cuid())
+  userId            String
+  orgId             String
+  tokenHash         String    @unique // SHA-256 of the raw token
+  deviceFingerprint String?
+  isRevoked         Boolean   @default(false)
+  expiresAt         DateTime
+  replacedById      String?   // points to the successor token in a rotation chain
+  createdAt         DateTime  @default(now())
+
+  user User         @relation(fields: [userId], references: [id])
+  org  Organization @relation(fields: [orgId], references: [id])
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+// ─── Audit Log ─────────────────────────────────────────────────────────────
 // Append-only. No DELETE policy. Every state-changing action writes a row.
+
 model AuditLog {
   id         String   @id @default(cuid())
   actor      String   // userId or "system"
