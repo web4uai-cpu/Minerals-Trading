@@ -168,3 +168,23 @@ export enum InvoiceStatus {
   ISSUED = 'ISSUED',
   CANCELLED = 'CANCELLED',
 }
+
+/** Shipment status — lifecycle of a physical goods movement. */
+export enum ShipmentStatus {
+  CREATED = 'CREATED',
+  DISPATCHED = 'DISPATCHED',
+  IN_TRANSIT = 'IN_TRANSIT',
+  DELIVERED = 'DELIVERED',
+  CONFIRMED = 'CONFIRMED',
+  CANCELLED = 'CANCELLED',
+}
+
+/** Tracking event type for shipment updates. */
+export enum TrackingEventType {
+  PICKUP = 'PICKUP',
+  CHECKPOINT = 'CHECKPOINT',
+  CUSTOMS = 'CUSTOMS',
+  EXCEPTION = 'EXCEPTION',
+  DELIVERED = 'DELIVERED',
+  WEIGHT_VERIFIED = 'WEIGHT_VERIFIED',
+}

@@ -1,1 +1,12 @@
-// @khanij/arbitration — Dispute resolution and arbitration domain logic (state machine, evidence rules, award validation)
+export {
+  validateDisputeTransition,
+  getLegalNextDisputeStates,
+  isTerminalDisputeState,
+  type DisputeTransitionContext,
+  type DisputeTransitionResult,
+} from './logic/dispute-state-machine';
+
+export {
+  computeAwardEscrowSplit,
+  type AwardEscrowAction,
+} from './logic/award-rules';

@@ -29,6 +29,12 @@ importers:
       '@khanij/ai':
         specifier: workspace:*
         version: link:../../packages/ai
+      '@khanij/arbitration':
+        specifier: workspace:*
+        version: link:../../packages/arbitration
+      '@khanij/blockchain':
+        specifier: workspace:*
+        version: link:../../packages/blockchain
       '@khanij/compliance':
         specifier: workspace:*
         version: link:../../packages/compliance
@@ -38,6 +44,9 @@ importers:
       '@khanij/finance':
         specifier: workspace:*
         version: link:../../packages/finance
+      '@khanij/logistics':
+        specifier: workspace:*
+        version: link:../../packages/logistics
       '@khanij/marketplace':
         specifier: workspace:*
         version: link:../../packages/marketplace

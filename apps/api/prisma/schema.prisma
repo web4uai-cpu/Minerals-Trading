@@ -383,6 +383,8 @@ model Deal {
   milestones DealMilestone[]
   escrow     EscrowLedger[]
   messages   DealMessage[]
+  shipments  Shipment[]
+  disputes   Dispute[]
 
   @@index([buyerOrgId])
   @@index([sellerOrgId])
@@ -544,4 +546,172 @@ model Invoice {
   @@index([sellerOrgId])
   @@index([buyerOrgId])
   @@map("invoices")
+}
+
+// ─── Shipment / Logistics ─────────────────────────────────────────────────
+// Physical movement of goods tied to a deal.
+
+enum ShipmentStatus {
+  CREATED
+  DISPATCHED
+  IN_TRANSIT
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+}
+
+enum TrackingEventType {
+  PICKUP
+  CHECKPOINT
+  CUSTOMS
+  EXCEPTION
+  DELIVERED
+  WEIGHT_VERIFIED
+}
+
+model Shipment {
+  id                    String         @id @default(uuid())
+  dealId                String
+  sellerOrgId           String
+  buyerOrgId            String
+  carrierName           String
+  vehicleNumber         String
+  driverName            String?
+  driverPhone           String?        // encrypted if real
+  originDistrict        String
+  originState           String
+  destinationDistrict   String
+  destinationState      String
+  estimatedDeliveryDate DateTime
+  weightAtOriginKg      Float?
+  weightAtDestinationKg Float?
+  status                ShipmentStatus @default(CREATED)
+  dispatchedAt          DateTime?
+  deliveredAt           DateTime?
+  confirmedAt           DateTime?
+  confirmedByUserId     String?
+  receivedByName        String?
+  receivedByPhone       String?
+  proofDocumentRef      String?        // S3 key for proof of delivery
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  deal           Deal            @relation(fields: [dealId], references: [id])
+  trackingEvents TrackingEvent[]
+
+  @@index([dealId])
+  @@index([sellerOrgId])
+  @@index([buyerOrgId])
+  @@index([status])
+  @@map("shipments")
+}
+
+model TrackingEvent {
+  id          String            @id @default(uuid())
+  shipmentId  String
+  eventType   TrackingEventType
+  location    String
+  notes       String?
+  weightKg    Float?
+  recordedBy  String            // userId
+  createdAt   DateTime          @default(now())
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+
+  @@index([shipmentId, createdAt])
+  @@map("tracking_events")
+}
+
+// ─── Arbitration ──────────────────────────────────────────────────────────
+// Dispute resolution with structured evidence and enforceable awards.
+
+enum DisputeCategory {
+  QUALITY
+  QUANTITY
+  PAYMENT
+  DELIVERY
+  OTHER
+}
+
+enum DisputeStatus {
+  FILED
+  UNDER_REVIEW
+  HEARING
+  AWARD_ISSUED
+  CLOSED
+  WITHDRAWN
+}
+
+model Dispute {
+  id           String          @id @default(uuid())
+  dealId       String
+  filedByOrgId String
+  filedByUserId String
+  category     DisputeCategory
+  description  String
+  status       DisputeStatus   @default(FILED)
+  assignedArbitratorId String?
+  filedAt      DateTime        @default(now())
+  closedAt     DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  deal      Deal       @relation(fields: [dealId], references: [id])
+  evidence  Evidence[]
+  award     Award?
+
+  @@index([dealId])
+  @@index([filedByOrgId])
+  @@index([status])
+  @@map("disputes")
+}
+
+model Evidence {
+  id           String   @id @default(uuid())
+  disputeId    String
+  submittedByOrgId String
+  submittedByUserId String
+  type         String   // "document", "testimony", "photo", "weight_slip"
+  title        String
+  description  String?
+  documentRef  String?  // S3 key
+  createdAt    DateTime @default(now())
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+
+  @@index([disputeId])
+  @@map("evidence")
+}
+
+model Award {
+  id           String   @id @default(uuid())
+  disputeId    String   @unique
+  arbitratorId String
+  decision     Json     // { ruling, rationale, escrowAction, amountPaise? }
+  isAiDrafted  Boolean  @default(false)
+  awardedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  dispute Dispute @relation(fields: [disputeId], references: [id])
+
+  @@map("awards")
+}
+
+// ─── Blockchain Anchoring ─────────────────────────────────────────────────
+// Hash anchors for audit trail tamper-evidence. No-op provider in MVP.
+
+model AuditAnchor {
+  id                 String   @id @default(uuid())
+  entityType         String
+  entityId           String
+  contentHash        String
+  anchorHash         String   @unique
+  previousAnchorHash String?
+  chainId            String?  // blockchain network identifier (null for no-op provider)
+  txHash             String?  // blockchain transaction hash (null for no-op provider)
+  anchoredAt         DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([anchoredAt])
+  @@map("audit_anchors")
 }

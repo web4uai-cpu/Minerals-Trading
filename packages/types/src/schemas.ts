@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType } from './enums';
+import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType, TrackingEventType } from './enums';
 
 // ─── JWT ────────────────────────────────────────────────────────
 
@@ -211,6 +211,45 @@ export const PlaceBidSchema = z.object({
 
 export type PlaceBidInput = z.infer<typeof PlaceBidSchema>;
 
+// ─── Logistics / Shipment ──────────────────────────────────────
+
+export const CreateShipmentSchema = z.object({
+  dealId: z.string().uuid(),
+  carrierName: z.string().min(1).max(255),
+  vehicleNumber: z.string().min(1).max(50),
+  driverName: z.string().min(1).max(255).optional(),
+  driverPhone: z.string().regex(/^\+?[1-9]\d{9,14}$/).optional(),
+  originDistrict: z.string().min(1),
+  originState: z.string().min(1),
+  destinationDistrict: z.string().min(1),
+  destinationState: z.string().min(1),
+  estimatedDeliveryDate: z.string().datetime(),
+  weightAtOriginKg: z.number().positive().optional(),
+});
+
+export type CreateShipmentInput = z.infer<typeof CreateShipmentSchema>;
+
+export const AddTrackingEventSchema = z.object({
+  shipmentId: z.string().uuid(),
+  eventType: z.nativeEnum(TrackingEventType),
+  location: z.string().min(1).max(500),
+  notes: z.string().max(2000).optional(),
+  weightKg: z.number().positive().optional(),
+});
+
+export type AddTrackingEventInput = z.infer<typeof AddTrackingEventSchema>;
+
+export const ConfirmDeliverySchema = z.object({
+  shipmentId: z.string().uuid(),
+  weightAtDestinationKg: z.number().positive(),
+  receivedByName: z.string().min(1).max(255),
+  receivedByPhone: z.string().regex(/^\+?[1-9]\d{9,14}$/).optional(),
+  notes: z.string().max(2000).optional(),
+  proofDocumentRef: z.string().min(1).max(1024).optional(),
+});
+
+export type ConfirmDeliveryInput = z.infer<typeof ConfirmDeliverySchema>;
+
 // ─── Dispute ────────────────────────────────────────────────────
 
 export const FileDisputeSchema = z.object({
@@ -220,6 +259,27 @@ export const FileDisputeSchema = z.object({
 });
 
 export type FileDisputeInput = z.infer<typeof FileDisputeSchema>;
+
+export const SubmitEvidenceSchema = z.object({
+  disputeId: z.string().uuid(),
+  type: z.enum(['document', 'testimony', 'photo', 'weight_slip']),
+  title: z.string().min(1).max(500),
+  description: z.string().max(5000).optional(),
+  documentRef: z.string().min(1).max(1024).optional(),
+});
+
+export type SubmitEvidenceInput = z.infer<typeof SubmitEvidenceSchema>;
+
+export const IssueAwardSchema = z.object({
+  disputeId: z.string().uuid(),
+  ruling: z.string().min(10).max(10000),
+  rationale: z.string().min(10).max(10000),
+  escrowAction: z.enum(['RELEASE_TO_SELLER', 'REFUND_TO_BUYER', 'SPLIT']),
+  splitSellerPercent: z.number().min(0).max(100).optional(),
+  isAiDrafted: z.boolean().optional(),
+});
+
+export type IssueAwardInput = z.infer<typeof IssueAwardSchema>;
 
 // ─── Contract Draft ────────────────────────────────────────────
 

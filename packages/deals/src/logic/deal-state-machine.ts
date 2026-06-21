@@ -12,7 +12,7 @@ const LEGAL_TRANSITIONS: Record<DealStatus, DealStatus[]> = {
   [DealStatus.ESCROW_PENDING]: [DealStatus.IN_FULFILMENT, DealStatus.CANCELLED],
   [DealStatus.IN_FULFILMENT]: [DealStatus.COMPLETED, DealStatus.DISPUTED, DealStatus.CANCELLED],
   [DealStatus.COMPLETED]: [],
-  [DealStatus.DISPUTED]: [],
+  [DealStatus.DISPUTED]: [DealStatus.COMPLETED, DealStatus.CANCELLED],
   [DealStatus.CANCELLED]: [],
 };
 

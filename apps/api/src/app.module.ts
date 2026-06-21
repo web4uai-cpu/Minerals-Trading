@@ -15,6 +15,9 @@ import { DealModule } from './deals/deal.module';
 import { NotificationModule } from './notifications/notification.module';
 import { BiddingModule } from './bidding/bidding.module';
 import { InvoiceModule } from './invoice/invoice.module';
+import { LogisticsModule } from './logistics/logistics.module';
+import { ArbitrationModule } from './arbitration/arbitration.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { InvoiceModule } from './invoice/invoice.module';
     NotificationModule,
     BiddingModule,
     InvoiceModule,
+    LogisticsModule,
+    ArbitrationModule,
+    BlockchainModule,
   ],
   controllers: [HealthController],
   providers: [],
