@@ -46,7 +46,10 @@ function sanitizeContent(raw: string): string {
 
 @WebSocketGateway({
   namespace: '/deal-room',
-  cors: { origin: process.env['APP_BASE_URL'] || '*' },
+  cors: {
+    origin: (process.env['CORS_ORIGINS'] ?? process.env['APP_BASE_URL'] ?? '*')
+      .split(',').map((o: string) => o.trim()).filter(Boolean),
+  },
 })
 export class DealRoomGateway
   implements OnGatewayConnection, OnGatewayDisconnect

@@ -25,7 +25,8 @@ import { TradeModule } from './trade/trade.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../../.env',
+      envFilePath: process.env['NODE_ENV'] === 'production' ? undefined : '../../.env',
+      ignoreEnvFile: process.env['NODE_ENV'] === 'production',
     }),
     LoggerModule,
     PrismaModule,

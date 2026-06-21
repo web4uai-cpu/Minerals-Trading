@@ -1,278 +1,274 @@
 # Deployment Guide — Khanij Nexus
 
-> Target: AWS ap-south-1 (Mumbai) — DPDP Act 2023 data residency.  
-> Container runtime: Docker → Kubernetes (EKS).
+> **Stack:** Vercel (frontend) · Railway (API + PostgreSQL + Redis) · Expo EAS (mobile)
 
 ---
 
-## Environments
-
-| Environment | Purpose | URL Pattern |
-|-------------|---------|-------------|
-| `local` | Developer laptop | `localhost:{port}` |
-| `dev` | Shared dev instance (PR previews) | `dev-api.khanijnexus.in` |
-| `staging` | Pre-production — production data shape, sandbox providers | `staging-api.khanijnexus.in` |
-| `production` | Live | `api.khanijnexus.in` |
-
----
-
-## Infrastructure Stack
+## Architecture
 
 ```
-AWS ap-south-1
-├── EKS (Kubernetes cluster)
-│   ├── apps/api (NestJS)         — Deployment: 2–10 replicas, HPA
-│   ├── apps/web (Next.js)        — Deployment: 2–5 replicas
-│   └── apps/mobile (Expo OTA)    — EAS Build + EAS Update
-│
-├── RDS (PostgreSQL 16 + TimescaleDB extension)
-│   └── Multi-AZ, encrypted at rest, automated backups (7 days)
-│
-├── ElastiCache (Redis 7)
-│   └── cluster mode, TLS, auth token
-│
-├── OpenSearch (Elasticsearch 8 compatible)
-│   └── 3 data nodes, encrypted at rest
-│
-├── DocumentDB or MongoDB Atlas (ap-south-1 cluster)
-│
-├── S3 + CloudFront
-│   ├── khanij-documents (compliance docs — private, presigned URLs only)
-│   └── khanij-static (Next.js static assets — public CDN)
-│
-├── ECR (container registry)
-├── Secrets Manager (all env vars / secrets)
-├── CloudWatch (logs + metrics)
-└── X-Ray (distributed tracing)
+┌──────────────┐       ┌────────────────────┐       ┌─────────────────┐
+│   Vercel      │──────▶│  Railway — API      │──────▶│ Railway Postgres │
+│  Next.js 14   │       │  NestJS + Prisma    │       │  PostgreSQL 16   │
+│  apps/web     │       │  apps/api           │       └─────────────────┘
+└──────────────┘       │                      │──────▶┌─────────────────┐
+                       │                      │       │  Railway Redis   │
+┌──────────────┐       │                      │       │  Redis 7         │
+│ Expo EAS      │──────▶│                      │       └─────────────────┘
+│ apps/mobile   │       └────────────────────┘
+└──────────────┘
 ```
 
 ---
 
-## Docker Images
+## Step 1 — Railway: Create Project
 
-### API
-```dockerfile
-# apps/api/Dockerfile
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
-COPY packages/ packages/
-COPY apps/api/ apps/api/
-RUN corepack enable && pnpm install --frozen-lockfile
-RUN pnpm --filter @khanij/api build
-RUN pnpm --filter @khanij/api exec prisma generate
-
-FROM node:20-alpine AS runner
-WORKDIR /app
-ENV NODE_ENV=production
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/prisma ./prisma
-COPY --from=builder /app/node_modules ./node_modules
-EXPOSE 4000
-CMD ["node", "dist/main.js"]
-```
-
-### Web
-```dockerfile
-# apps/web/Dockerfile
-FROM node:20-alpine AS builder
-# ... build Next.js with output: 'standalone'
-
-FROM node:20-alpine AS runner
-ENV NODE_ENV=production
-COPY --from=builder /app/apps/web/.next/standalone ./
-EXPOSE 3000
-CMD ["node", "server.js"]
-```
+1. Go to [railway.app](https://railway.app) → **New Project**
+2. Add **PostgreSQL** plugin → copy `DATABASE_URL` from Variables tab
+3. Add **Redis** plugin → copy `REDIS_URL` from Variables tab
 
 ---
 
-## Kubernetes Manifests
+## Step 2 — Railway: Deploy Backend API
 
-### API Deployment (example)
-```yaml
-# infra/k8s/api-deployment.yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: khanij-api
-  namespace: production
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app: khanij-api
-  template:
-    spec:
-      containers:
-        - name: api
-          image: {ECR_URL}/khanij-api:{TAG}
-          ports:
-            - containerPort: 4000
-          env:
-            - name: NODE_ENV
-              value: production
-          envFrom:
-            - secretRef:
-                name: khanij-api-secrets  # from AWS Secrets Manager via External Secrets
-          resources:
-            requests: { cpu: 250m, memory: 512Mi }
-            limits:   { cpu: 1000m, memory: 1Gi }
-          livenessProbe:
-            httpGet: { path: /health, port: 4000 }
-            initialDelaySeconds: 30
-            periodSeconds: 10
-          readinessProbe:
-            httpGet: { path: /health, port: 4000 }
-            initialDelaySeconds: 10
-            periodSeconds: 5
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: khanij-api-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: khanij-api
-  minReplicas: 2
-  maxReplicas: 10
-  metrics:
-    - type: Resource
-      resource:
-        name: cpu
-        target: { type: Utilization, averageUtilization: 70 }
+1. In the same project → **New Service** → **GitHub Repo** → select your repo
+2. Railway auto-detects `Dockerfile` + `railway.toml` at repo root
+3. Set **Root Directory** to `/` (monorepo root)
+
+### Required Environment Variables
+
+Set these in Railway dashboard → API service → **Variables** tab:
+
+```env
+# ── Database & Cache (use Railway reference variables) ──
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+REDIS_URL=${{Redis.REDIS_URL}}
+
+# ── Runtime ──
+NODE_ENV=production
+
+# ── Auth Secrets (generate with: openssl rand -hex 32) ──
+JWT_ACCESS_SECRET=<generate-64-char-hex>
+JWT_REFRESH_SECRET=<generate-different-64-char-hex>
+
+# ── PII Encryption (generate with: openssl rand -base64 32) ──
+PII_ENCRYPTION_KEY=<generate-base64-32-byte-key>
+
+# ── CORS — your Vercel URL(s), comma-separated ──
+CORS_ORIGINS=https://your-app.vercel.app
+
+# ── AI (optional — features degrade without it) ──
+ANTHROPIC_API_KEY=sk-ant-xxxx
+AI_MODEL=claude-sonnet-4-6
+
+# ── S3 Storage (optional — required for doc uploads) ──
+S3_ENDPOINT=https://s3.ap-south-1.amazonaws.com
+S3_ACCESS_KEY=<your-key>
+S3_SECRET_KEY=<your-secret>
+S3_BUCKET=khanij-documents
+S3_REGION=ap-south-1
+```
+
+### Variables you do NOT need to set
+
+| Variable | Why |
+|----------|-----|
+| `PORT` | Railway injects automatically |
+| `API_PORT` | Falls back to `PORT` |
+| `ELASTICSEARCH_*` | Optional — search works without it |
+| `SMTP_*` | Optional — notifications disabled |
+| `LOG_LEVEL` | Defaults to `info` |
+
+### How deploys work
+
+1. Railway builds the Docker image from `Dockerfile`
+2. Start command (from `railway.toml`) runs:
+   ```
+   npx prisma migrate deploy && node apps/api/dist/main.js
+   ```
+3. Health check hits `/health` — Railway monitors this endpoint
+
+### First deploy — initialize database
+
+If no migrations exist yet, run once via Railway CLI:
+```bash
+railway run --service api -- npx prisma db push
+```
+
+Or if you have migration files:
+```bash
+railway run --service api -- npx prisma migrate deploy
 ```
 
 ---
 
-## Database Migrations (Production)
+## Step 3 — Vercel: Deploy Frontend
 
-**Never auto-migrate in production.** Migrations run as a Kubernetes Job before deploying the new API:
+1. Go to [vercel.com](https://vercel.com) → **Add New Project** → import your GitHub repo
+2. Configure:
+   - **Framework Preset:** Next.js (auto-detected)
+   - **Root Directory:** `apps/web`
+   - Build/output auto-configured via `vercel.json`
 
-```yaml
-# infra/k8s/migrate-job.yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: khanij-migrate-{VERSION}
-spec:
-  template:
-    spec:
-      containers:
-        - name: migrate
-          image: {ECR_URL}/khanij-api:{TAG}
-          command: ["npx", "prisma", "migrate", "deploy"]
-          envFrom:
-            - secretRef:
-                name: khanij-api-secrets
-      restartPolicy: Never
+### Environment Variables (Vercel Dashboard)
+
+| Variable | Value | Where |
+|----------|-------|-------|
+| `NEXT_PUBLIC_API_URL` | `https://your-api.up.railway.app` | Settings → Environment Variables |
+
+That's the **only** variable needed for the frontend.
+
+### After first deploy
+
+1. Copy your Vercel URL (e.g., `https://khanij-nexus.vercel.app`)
+2. Go back to Railway → API service → Variables
+3. Update `CORS_ORIGINS` to include your Vercel URL
+
+### Custom Domain (optional)
+
+1. Vercel → Settings → Domains → Add domain
+2. Add the custom domain to `CORS_ORIGINS` in Railway
+
+---
+
+## Step 4 — Mobile App (Expo)
+
+### Development (pointing to Railway API)
+```bash
+EXPO_PUBLIC_API_URL=https://your-api.up.railway.app npx expo start
 ```
 
-### Migration checklist:
-- [ ] Migration is backward-compatible (old API can run against new schema)
-- [ ] No DROP COLUMN or DROP TABLE without a previous deprecation release
-- [ ] Large table changes use `ALTER TABLE ... ADD COLUMN ... DEFAULT NULL` then backfill job
-- [ ] Tested on staging with production-size data
+### Production Build (EAS)
 
----
-
-## CI/CD Pipeline
-
-```yaml
-# .github/workflows/deploy.yml (reference)
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    services:
-      postgres: { image: timescale/timescaledb:latest-pg16 }
-      redis: { image: redis:7-alpine }
-      elasticsearch: { image: elasticsearch:8.11.0 }
-    steps:
-      - pnpm install
-      - pnpm typecheck
-      - pnpm lint
-      - pnpm test --coverage
-
-  build-and-push:
-    needs: test
-    steps:
-      - Build API Docker image
-      - Build Web Docker image
-      - Push to ECR
-
-  deploy-staging:
-    needs: build-and-push
-    steps:
-      - Run migrate Job in staging namespace
-      - kubectl rollout restart deployment/khanij-api -n staging
-      - Run smoke tests
-
-  deploy-production:
-    needs: deploy-staging
-    environment: production  # requires manual approval
-    steps:
-      - Run migrate Job in production namespace
-      - kubectl set image deployment/khanij-api api={IMAGE}
-      - kubectl rollout status deployment/khanij-api
+Create `apps/mobile/eas.json`:
+```json
+{
+  "cli": { "version": ">= 5.0.0" },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://your-api.up.railway.app"
+      }
+    },
+    "production": {
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://your-api.up.railway.app"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
 ```
-
----
-
-## Secrets Management
-
-```
-Development: .env file (gitignored)
-CI:          GitHub Actions Secrets → injected as env vars
-Production:  AWS Secrets Manager → External Secrets Operator → K8s Secret
-
-Secret naming: /khanij/{environment}/{service}/{key}
-Example: /khanij/production/api/jwt-access-secret
-```
-
----
-
-## Monitoring & Alerting
-
-| Signal | Tool | Alert threshold |
-|--------|------|----------------|
-| API error rate | CloudWatch | > 1% over 5 min |
-| API p95 latency | CloudWatch | > 500ms |
-| DB connection pool | CloudWatch | > 80% saturation |
-| Redis memory | CloudWatch | > 75% |
-| Elasticsearch health | CloudWatch | non-green status |
-| BullMQ queue depth | Custom metric | > 500 unprocessed jobs |
-| JWT invalid attempts | CloudWatch Insights | > 100/min from single IP |
-
----
-
-## Disaster Recovery
-
-| Scenario | RTO | RPO | Action |
-|----------|-----|-----|--------|
-| API pod crash | < 1 min | 0 | K8s restarts pod |
-| DB instance failure | < 5 min | < 1 min | RDS Multi-AZ failover |
-| Redis failure | < 2 min | 0 (cache) | Redis replica promotion |
-| Elasticsearch failure | < 10 min | < 1 min (reindex from PG) | Re-index from Postgres |
-| Full AZ outage | < 15 min | < 1 min | K8s reschedules to healthy AZ |
-
----
-
-## Mobile Deployment (Expo)
 
 ```bash
-# Build production APK/IPA
+# Build
 eas build --platform all --profile production
 
-# Over-the-air update (JS bundle only — no app store review)
-eas update --branch production --message "v1.2.3 hotfix"
+# OTA update (no app store review)
+eas update --branch production --message "v1.x.x"
 
-# Full release (requires app store review)
+# App store submit
 eas submit --platform all
 ```
+
+---
+
+## Generate Secrets
+
+Run these to generate all production secrets:
+
+```bash
+# JWT secrets (64-char hex strings)
+echo "JWT_ACCESS_SECRET=$(openssl rand -hex 32)"
+echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)"
+
+# PII encryption key (32-byte base64)
+echo "PII_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+```
+
+---
+
+## Optional Services
+
+### Elasticsearch (full-text search)
+
+Without it, marketplace search still works (AI intent parsing + DB query).
+With it, listings are indexed for fast full-text + faceted search.
+
+Options:
+- **Bonsai.io** — free tier, managed ES
+- **Elastic Cloud** — official, managed
+- Set: `ELASTICSEARCH_NODE`, `ELASTICSEARCH_USERNAME`, `ELASTICSEARCH_PASSWORD`
+
+### S3-Compatible Storage (compliance documents)
+
+Options:
+- **AWS S3** — `S3_ENDPOINT=https://s3.ap-south-1.amazonaws.com`
+- **Cloudflare R2** — S3-compatible, zero egress fees
+- **Backblaze B2** — cheapest S3-compatible
+- **MinIO on Railway** — add MinIO plugin for self-hosted
+
+### Email Notifications
+
+Set: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
+
+Options: **Resend**, **AWS SES**, **SendGrid** (free tier)
+
+---
+
+## Post-Deploy Verification Checklist
+
+- [ ] `https://your-api.up.railway.app/health` → returns `200 OK` with version
+- [ ] `https://your-app.vercel.app` → loads login page (dark theme)
+- [ ] Register a new account → redirects to dashboard
+- [ ] Login works with registered credentials
+- [ ] Dashboard shows role badge and quick actions
+- [ ] Marketplace search returns results (or empty with no seed data)
+- [ ] No CORS errors in browser console
+- [ ] Railway logs show `Khanij Nexus API running on port XXXX`
+- [ ] Mobile app connects to API when `EXPO_PUBLIC_API_URL` is set
+
+---
+
+## Environment Variable Reference
+
+### Required (API will crash without these)
+
+| Variable | Source | Generate |
+|---|---|---|
+| `DATABASE_URL` | Railway Postgres plugin | Auto-provided |
+| `REDIS_URL` | Railway Redis plugin | Auto-provided |
+| `JWT_ACCESS_SECRET` | Manual | `openssl rand -hex 32` |
+| `JWT_REFRESH_SECRET` | Manual | `openssl rand -hex 32` |
+| `PII_ENCRYPTION_KEY` | Manual | `openssl rand -base64 32` |
+| `CORS_ORIGINS` | Manual | Your Vercel URL |
+| `NEXT_PUBLIC_API_URL` | Vercel dashboard | Your Railway API URL |
+
+### Optional (features degrade gracefully)
+
+| Variable | Feature |
+|---|---|
+| `ANTHROPIC_API_KEY` | AI search, contract drafting, compliance review |
+| `S3_ENDPOINT` + keys | Document upload |
+| `ELASTICSEARCH_NODE` | Full-text search indexing |
+| `SMTP_HOST` + creds | Email notifications |
+| `AI_MODEL` | Defaults to `claude-sonnet-4-6` |
+| `AI_MAX_TOKENS` | Defaults to `2000` |
+| `LOG_LEVEL` | Defaults to `info` |
+
+---
+
+## Troubleshooting
+
+| Issue | Fix |
+|---|---|
+| CORS error in browser | Add Vercel URL to `CORS_ORIGINS` in Railway |
+| `prisma migrate deploy` fails | Check `DATABASE_URL` is the **public** Railway URL |
+| API returns 500 on startup | Check Railway logs — missing env var? |
+| Health check fails | Ensure `/health` endpoint responds (no auth required) |
+| Mobile can't connect | Use Railway **public** URL, not `.railway.internal` |
+| Redis connection refused | Use `${{Redis.REDIS_URL}}` reference variable |
