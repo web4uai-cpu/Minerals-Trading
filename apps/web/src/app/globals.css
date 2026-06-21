@@ -39,3 +39,128 @@ a {
 a:hover {
   text-decoration: underline;
 }
+
+/* ─── Glassmorphic Design System ─────────────────────────────── */
+
+@layer components {
+  .glass {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-hover:hover {
+    border-color: rgba(201, 148, 58, 0.3);
+    box-shadow: 0 8px 32px rgba(201, 148, 58, 0.1);
+    transition: all 0.2s ease;
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .glass-input {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .glass-input:focus {
+    border-color: rgba(201, 148, 58, 0.5);
+    box-shadow: 0 0 0 3px rgba(201, 148, 58, 0.1);
+    outline: none;
+  }
+}
+
+/* ─── Background Textures ────────────────────────────────────── */
+
+.bg-mineral-pattern {
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(201, 148, 58, 0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(86, 211, 100, 0.04) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 80%, rgba(201, 148, 58, 0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #0D1117 0%, #0a0e14 100%);
+}
+
+.bg-hero-pattern {
+  background:
+    radial-gradient(ellipse at 30% 30%, rgba(201, 148, 58, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 70%, rgba(86, 211, 100, 0.05) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(201, 148, 58, 0.02) 0%, transparent 70%),
+    linear-gradient(135deg, #0D1117 0%, #0f151d 50%, #0D1117 100%);
+  position: relative;
+}
+
+.bg-hero-pattern::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      60deg,
+      transparent,
+      transparent 100px,
+      rgba(201, 148, 58, 0.015) 100px,
+      rgba(201, 148, 58, 0.015) 101px
+    ),
+    repeating-linear-gradient(
+      -60deg,
+      transparent,
+      transparent 100px,
+      rgba(201, 148, 58, 0.01) 100px,
+      rgba(201, 148, 58, 0.01) 101px
+    );
+  pointer-events: none;
+}
+
+/* ─── Animations ─────────────────────────────────────────────── */
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(201, 148, 58, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(201, 148, 58, 0.2); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-glow { animation: glow-pulse 3s ease-in-out infinite; }
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* ─── Typography Utilities ───────────────────────────────────── */
+
+.font-mono-nums {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #E5B85C, #C9943A, #A87A2E);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
