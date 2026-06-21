@@ -1,0 +1,8 @@
+apps/api/
+apps/mobile/
+infra/
+docs/
+.ai/
+governance/
+testing/
+.claude/
