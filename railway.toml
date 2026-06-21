@@ -1,9 +1,27 @@
 [build]
-builder = "DOCKERFILE"
-dockerfilePath = "./Dockerfile"
+builder = "NIXPACKS"
+
+[build.nixpacks]
+aptPkgs = ["openssl"]
+installCmd = "corepack enable && corepack prepare pnpm@9 --activate && pnpm install --frozen-lockfile"
+buildCmd = """
+cd apps/api && npx prisma generate && cd ../.. && \
+pnpm --filter @khanij/types build && \
+pnpm --filter @khanij/compliance build && \
+pnpm --filter @khanij/deals build && \
+pnpm --filter @khanij/marketplace build && \
+pnpm --filter @khanij/bidding build && \
+pnpm --filter @khanij/ai build && \
+pnpm --filter @khanij/finance build && \
+pnpm --filter @khanij/logistics build && \
+pnpm --filter @khanij/arbitration build && \
+pnpm --filter @khanij/blockchain build && \
+pnpm --filter @khanij/api build
+"""
+startCmd = "node apps/api/dist/main.js"
 
 [deploy]
 healthcheckPath = "/health"
-healthcheckTimeout = 30
+healthcheckTimeout = 60
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
