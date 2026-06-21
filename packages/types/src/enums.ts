@@ -188,3 +188,18 @@ export enum TrackingEventType {
   DELIVERED = 'DELIVERED',
   WEIGHT_VERIFIED = 'WEIGHT_VERIFIED',
 }
+
+/** Trade direction for international transactions. */
+export enum TradeDirection {
+  EXPORT = 'EXPORT',
+  IMPORT = 'IMPORT',
+}
+
+/** Export clearance status. */
+export enum ExportClearanceStatus {
+  PENDING = 'PENDING',
+  APPLIED = 'APPLIED',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  EXPIRED = 'EXPIRED',
+}

@@ -19,6 +19,7 @@ import { LogisticsModule } from './logistics/logistics.module';
 import { ArbitrationModule } from './arbitration/arbitration.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
 import { AiIntelligenceModule } from './ai-intelligence/ai-intelligence.module';
+import { TradeModule } from './trade/trade.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { AiIntelligenceModule } from './ai-intelligence/ai-intelligence.module';
     ArbitrationModule,
     BlockchainModule,
     AiIntelligenceModule,
+    TradeModule,
   ],
   controllers: [HealthController],
   providers: [],

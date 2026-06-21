@@ -9,3 +9,9 @@ export {
   REQUIRED_ITEMS_BY_ORG_TYPE,
   COMPLIANCE_ITEM_LABELS,
 } from './logic/required-items';
+
+export {
+  checkTradeEligibility,
+  type TradeEligibilityContext,
+  type TradeEligibilityResult,
+} from './logic/trade-rules';

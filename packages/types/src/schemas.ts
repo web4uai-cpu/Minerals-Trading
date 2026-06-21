@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType, TrackingEventType } from './enums';
+import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType, TrackingEventType, TradeDirection } from './enums';
 
 // ─── JWT ────────────────────────────────────────────────────────
 
@@ -353,6 +353,23 @@ export const ComplianceReviewOutputSchema = z.object({
 });
 
 export type ComplianceReviewOutput = z.infer<typeof ComplianceReviewOutputSchema>;
+
+// ─── International Trade ───────────────────────────────────────
+
+export const CreateTradeApplicationSchema = z.object({
+  dealId: z.string().uuid(),
+  direction: z.nativeEnum(TradeDirection),
+  destinationCountry: z.string().min(2).max(100),
+  portOfLoading: z.string().min(1).max(255),
+  portOfDischarge: z.string().min(1).max(255),
+  mineralName: z.string().min(1),
+  hsnCode: z.string().min(1),
+  quantityMt: z.number().positive(),
+  valueFobPaise: z.number().int().positive(),
+  iecNumber: z.string().regex(/^[A-Z0-9]{10}$/).optional(),
+});
+
+export type CreateTradeApplicationInput = z.infer<typeof CreateTradeApplicationSchema>;
 
 // ─── Common response envelope ───────────────────────────────────
 

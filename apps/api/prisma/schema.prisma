@@ -380,11 +380,12 @@ model Deal {
   buyerOrg   Organization   @relation("DealBuyerOrg", fields: [buyerOrgId], references: [id])
   sellerOrg  Organization   @relation("DealSellerOrg", fields: [sellerOrgId], references: [id])
   quote      Quote          @relation(fields: [quoteId], references: [id])
-  milestones DealMilestone[]
-  escrow     EscrowLedger[]
-  messages   DealMessage[]
-  shipments  Shipment[]
-  disputes   Dispute[]
+  milestones         DealMilestone[]
+  escrow             EscrowLedger[]
+  messages           DealMessage[]
+  shipments          Shipment[]
+  disputes           Dispute[]
+  tradeApplications  TradeApplication[]
 
   @@index([buyerOrgId])
   @@index([sellerOrgId])
@@ -714,4 +715,51 @@ model AuditAnchor {
   @@index([entityType, entityId])
   @@index([anchoredAt])
   @@map("audit_anchors")
+}
+
+// ─── International Trade ──────────────────────────────────────────────────
+// Cross-border trade applications with export/import clearance tracking.
+
+enum TradeDirection {
+  EXPORT
+  IMPORT
+}
+
+enum ExportClearanceStatus {
+  PENDING
+  APPLIED
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+model TradeApplication {
+  id                  String                @id @default(uuid())
+  dealId              String
+  applicantOrgId      String
+  direction           TradeDirection
+  destinationCountry  String
+  portOfLoading       String
+  portOfDischarge     String
+  mineralName         String
+  hsnCode             String
+  quantityMt          Decimal               @db.Decimal(12, 2)
+  valueFobPaise       BigInt
+  iecNumber           String?
+  clearanceStatus     ExportClearanceStatus  @default(PENDING)
+  dgftRefNumber       String?               // DGFT reference after application
+  appliedAt           DateTime?
+  approvedAt          DateTime?
+  rejectedAt          DateTime?
+  rejectionReason     String?
+  validUntil          DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+
+  deal Deal @relation(fields: [dealId], references: [id])
+
+  @@index([dealId])
+  @@index([applicantOrgId])
+  @@index([clearanceStatus])
+  @@map("trade_applications")
 }
