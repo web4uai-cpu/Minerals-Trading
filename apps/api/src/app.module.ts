@@ -18,6 +18,7 @@ import { InvoiceModule } from './invoice/invoice.module';
 import { LogisticsModule } from './logistics/logistics.module';
 import { ArbitrationModule } from './arbitration/arbitration.module';
 import { BlockchainModule } from './blockchain/blockchain.module';
+import { AiIntelligenceModule } from './ai-intelligence/ai-intelligence.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { BlockchainModule } from './blockchain/blockchain.module';
     LogisticsModule,
     ArbitrationModule,
     BlockchainModule,
+    AiIntelligenceModule,
   ],
   controllers: [HealthController],
   providers: [],

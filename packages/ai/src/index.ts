@@ -26,6 +26,24 @@ export {
 } from './prompts/notification-content.prompt';
 export type { NotificationContext } from './prompts/notification-content.prompt';
 
+export {
+  buildPriceAdvisorPrompt,
+  priceAdvisorPromptTemplate,
+} from './prompts/price-advisor.prompt';
+export type { PriceAdvisorContext } from './prompts/price-advisor.prompt';
+
+export {
+  buildFraudSignalPrompt,
+  fraudSignalPromptTemplate,
+} from './prompts/fraud-signal.prompt';
+export type { FraudSignalContext } from './prompts/fraud-signal.prompt';
+
+export {
+  buildComplianceReviewPrompt,
+  complianceReviewPromptTemplate,
+} from './prompts/compliance-review.prompt';
+export type { ComplianceReviewContext } from './prompts/compliance-review.prompt';
+
 // --- Evaluators ---
 export { checkHallucination } from './evaluators/hallucination.eval';
 export type {

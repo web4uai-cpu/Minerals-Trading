@@ -304,6 +304,56 @@ export const NotificationOutputSchema = z.object({
 
 export type NotificationOutput = z.infer<typeof NotificationOutputSchema>;
 
+// ─── AI Agent Outputs ──────────────────────────────────────────
+
+/** Price advisor output — contextualizes a proposed price vs market. */
+export const PriceAdvisorOutputSchema = z.object({
+  assessment: z.enum(['BELOW_MARKET', 'FAIR', 'ABOVE_MARKET', 'SIGNIFICANTLY_ABOVE']),
+  proposedPricePaise: z.number().int(),
+  fairLowPaise: z.number().int(),
+  fairHighPaise: z.number().int(),
+  refPricePaise: z.number().int(),
+  deviationPercent: z.number(),
+  analysis: z.string().max(2000),
+  recommendation: z.string().max(500),
+  disclaimer: z.string(),
+});
+
+export type PriceAdvisorOutput = z.infer<typeof PriceAdvisorOutputSchema>;
+
+/** Fraud signal detection output. */
+export const FraudSignalOutputSchema = z.object({
+  riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+  signals: z.array(z.object({
+    type: z.string(),
+    description: z.string(),
+    severity: z.enum(['LOW', 'MEDIUM', 'HIGH']),
+    evidence: z.string(),
+  })),
+  overallAssessment: z.string().max(2000),
+  recommendedActions: z.array(z.string()),
+  disclaimer: z.string(),
+});
+
+export type FraudSignalOutput = z.infer<typeof FraudSignalOutputSchema>;
+
+/** Compliance document review output. */
+export const ComplianceReviewOutputSchema = z.object({
+  documentType: z.string(),
+  completeness: z.enum(['COMPLETE', 'PARTIAL', 'INSUFFICIENT']),
+  extractedFields: z.record(z.string(), z.unknown()),
+  redFlags: z.array(z.object({
+    field: z.string(),
+    issue: z.string(),
+    severity: z.enum(['WARNING', 'ERROR']),
+  })),
+  recommendation: z.enum(['APPROVE', 'REVIEW_REQUIRED', 'REJECT']),
+  summary: z.string().max(2000),
+  disclaimer: z.string(),
+});
+
+export type ComplianceReviewOutput = z.infer<typeof ComplianceReviewOutputSchema>;
+
 // ─── Common response envelope ───────────────────────────────────
 
 export const ErrorResponseSchema = z.object({
