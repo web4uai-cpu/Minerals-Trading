@@ -11,25 +11,34 @@ import * as Minio from 'minio';
 @Injectable()
 export class StorageService implements OnModuleInit {
   private readonly logger = new Logger(StorageService.name);
-  private client: Minio.Client;
+  private client: Minio.Client | null = null;
   private readonly bucket: string;
+  private readonly enabled: boolean;
 
   constructor(private readonly config: ConfigService) {
-    const endpoint = this.config.getOrThrow<string>('S3_ENDPOINT');
-    const url = new URL(endpoint);
-
-    this.client = new Minio.Client({
-      endPoint: url.hostname,
-      port: url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 9000),
-      useSSL: url.protocol === 'https:',
-      accessKey: this.config.getOrThrow<string>('S3_ACCESS_KEY'),
-      secretKey: this.config.getOrThrow<string>('S3_SECRET_KEY'),
-    });
+    const endpoint = this.config.get<string>('S3_ENDPOINT');
+    const accessKey = this.config.get<string>('S3_ACCESS_KEY');
+    const secretKey = this.config.get<string>('S3_SECRET_KEY');
 
     this.bucket = this.config.get<string>('S3_BUCKET', 'khanij-documents');
+    this.enabled = !!(endpoint && accessKey && secretKey);
+
+    if (this.enabled) {
+      const url = new URL(endpoint!);
+      this.client = new Minio.Client({
+        endPoint: url.hostname,
+        port: url.port ? parseInt(url.port, 10) : (url.protocol === 'https:' ? 443 : 9000),
+        useSSL: url.protocol === 'https:',
+        accessKey: accessKey!,
+        secretKey: secretKey!,
+      });
+    } else {
+      this.logger.warn('S3 not configured (S3_ENDPOINT/S3_ACCESS_KEY/S3_SECRET_KEY missing) — file uploads disabled');
+    }
   }
 
   async onModuleInit(): Promise<void> {
+    if (!this.client) return;
     try {
       const exists = await this.client.bucketExists(this.bucket);
       if (!exists) {
@@ -55,6 +64,7 @@ export class StorageService implements OnModuleInit {
     key: string,
     expirySeconds = 900,
   ): Promise<string> {
+    if (!this.client) throw new Error('Storage not configured — set S3_ENDPOINT, S3_ACCESS_KEY, S3_SECRET_KEY');
     return this.client.presignedPutObject(this.bucket, key, expirySeconds);
   }
 
@@ -66,16 +76,19 @@ export class StorageService implements OnModuleInit {
     key: string,
     expirySeconds = 3600,
   ): Promise<string> {
+    if (!this.client) throw new Error('Storage not configured');
     return this.client.presignedGetObject(this.bucket, key, expirySeconds);
   }
 
   /** Delete an object from storage. */
   async deleteObject(key: string): Promise<void> {
+    if (!this.client) return;
     await this.client.removeObject(this.bucket, key);
   }
 
   /** Check if an object exists. */
   async objectExists(key: string): Promise<boolean> {
+    if (!this.client) return false;
     try {
       await this.client.statObject(this.bucket, key);
       return true;
