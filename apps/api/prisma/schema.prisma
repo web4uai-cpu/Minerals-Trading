@@ -385,7 +385,8 @@ model Deal {
   messages           DealMessage[]
   shipments          Shipment[]
   disputes           Dispute[]
-  tradeApplications  TradeApplication[]
+  tradeApplications       TradeApplication[]
+  crossBorderSettlements  CrossBorderSettlement[]
 
   @@index([buyerOrgId])
   @@index([sellerOrgId])
@@ -738,8 +739,9 @@ model TradeApplication {
   dealId              String
   applicantOrgId      String
   direction           TradeDirection
-  destinationCountry  String
-  portOfLoading       String
+  destinationCountry      String
+  destinationCountryCode  String                @db.Char(2)
+  portOfLoading           String
   portOfDischarge     String
   mineralName         String
   hsnCode             String
@@ -756,10 +758,64 @@ model TradeApplication {
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
 
-  deal Deal @relation(fields: [dealId], references: [id])
+  deal        Deal                     @relation(fields: [dealId], references: [id])
+  settlements CrossBorderSettlement[]
 
   @@index([dealId])
   @@index([applicantOrgId])
   @@index([clearanceStatus])
   @@map("trade_applications")
+}
+
+// ─── Cross-Border Settlement ──────────────────────────────────────────────
+// Tracks forex and payment for international trade applications.
+// Real money movement is via PaymentProvider stub — this models the ledger.
+
+enum SettlementCurrency {
+  INR
+  USD
+  EUR
+  GBP
+  JPY
+  AED
+  SGD
+  AUD
+}
+
+enum CrossBorderSettlementStatus {
+  PENDING_FOREX
+  FOREX_LOCKED
+  PAYMENT_INITIATED
+  PAYMENT_CONFIRMED
+  SETTLED
+  FAILED
+}
+
+model CrossBorderSettlement {
+  id                    String                       @id @default(uuid())
+  tradeApplicationId    String
+  dealId                String
+  sourceCurrency        SettlementCurrency
+  targetCurrency        SettlementCurrency
+  amountSourcePaise     BigInt
+  amountTargetPaise     BigInt?
+  forexRateSnapshot     Decimal                      @db.Decimal(18, 8)
+  forexLockedAt         DateTime?
+  forexExpiresAt        DateTime?
+  bankSwiftCode         String
+  beneficiaryAccountRef String
+  status                CrossBorderSettlementStatus  @default(PENDING_FOREX)
+  paymentRef            String?
+  settledAt             DateTime?
+  failureReason         String?
+  createdAt             DateTime                     @default(now())
+  updatedAt             DateTime                     @updatedAt
+
+  tradeApplication TradeApplication @relation(fields: [tradeApplicationId], references: [id])
+  deal             Deal             @relation(fields: [dealId], references: [id])
+
+  @@index([tradeApplicationId])
+  @@index([dealId])
+  @@index([status])
+  @@map("cross_border_settlements")
 }

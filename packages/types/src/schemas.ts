@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType, TrackingEventType, TradeDirection } from './enums';
+import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType, TrackingEventType, TradeDirection, SettlementCurrency } from './enums';
 
 // ─── JWT ────────────────────────────────────────────────────────
 
@@ -360,6 +360,7 @@ export const CreateTradeApplicationSchema = z.object({
   dealId: z.string().uuid(),
   direction: z.nativeEnum(TradeDirection),
   destinationCountry: z.string().min(2).max(100),
+  destinationCountryCode: z.string().regex(/^[A-Z]{2}$/, 'ISO 3166-1 alpha-2 code required'),
   portOfLoading: z.string().min(1).max(255),
   portOfDischarge: z.string().min(1).max(255),
   mineralName: z.string().min(1),
@@ -370,6 +371,21 @@ export const CreateTradeApplicationSchema = z.object({
 });
 
 export type CreateTradeApplicationInput = z.infer<typeof CreateTradeApplicationSchema>;
+
+// ─── Cross-Border Settlement ────────────────────────────────────
+
+export const CreateCrossBorderSettlementSchema = z.object({
+  tradeApplicationId: z.string().uuid(),
+  dealId: z.string().uuid(),
+  sourceCurrency: z.nativeEnum(SettlementCurrency),
+  targetCurrency: z.nativeEnum(SettlementCurrency),
+  amountSourcePaise: z.number().int().positive(),
+  forexRateSnapshot: z.number().positive(),
+  bankSwiftCode: z.string().min(8).max(11),
+  beneficiaryAccountRef: z.string().min(1).max(255),
+});
+
+export type CreateCrossBorderSettlementInput = z.infer<typeof CreateCrossBorderSettlementSchema>;
 
 // ─── Common response envelope ───────────────────────────────────
 

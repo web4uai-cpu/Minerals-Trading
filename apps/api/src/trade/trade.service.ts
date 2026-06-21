@@ -12,6 +12,7 @@ import { ExportClearanceStatus, TradeDirection } from '@prisma/client';
 import {
   checkTradeEligibility,
   TradeEligibilityContext,
+  checkCountryTradeRules,
 } from '@khanij/compliance';
 import { randomUUID } from 'crypto';
 
@@ -82,12 +83,25 @@ export class TradeService {
       });
     }
 
+    const countryResult = checkCountryTradeRules({
+      countryCode: input.destinationCountryCode,
+      direction: input.direction,
+      mineralName: input.mineralName,
+    });
+    if (!countryResult.allowed) {
+      throw new BadRequestException({
+        code: 'COUNTRY_TRADE_BLOCKED',
+        message: `Country trade check failed: ${countryResult.reasons.join('; ')}`,
+      });
+    }
+
     const application = await this.prisma.tradeApplication.create({
       data: {
         dealId: input.dealId,
         applicantOrgId: orgId,
         direction: input.direction as TradeDirection,
         destinationCountry: input.destinationCountry,
+        destinationCountryCode: input.destinationCountryCode,
         portOfLoading: input.portOfLoading,
         portOfDischarge: input.portOfDischarge,
         mineralName: input.mineralName,

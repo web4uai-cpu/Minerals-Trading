@@ -203,3 +203,25 @@ export enum ExportClearanceStatus {
   REJECTED = 'REJECTED',
   EXPIRED = 'EXPIRED',
 }
+
+/** Supported currencies for cross-border settlement. */
+export enum SettlementCurrency {
+  INR = 'INR',
+  USD = 'USD',
+  EUR = 'EUR',
+  GBP = 'GBP',
+  JPY = 'JPY',
+  AED = 'AED',
+  SGD = 'SGD',
+  AUD = 'AUD',
+}
+
+/** Cross-border settlement status. */
+export enum CrossBorderSettlementStatus {
+  PENDING_FOREX = 'PENDING_FOREX',
+  FOREX_LOCKED = 'FOREX_LOCKED',
+  PAYMENT_INITIATED = 'PAYMENT_INITIATED',
+  PAYMENT_CONFIRMED = 'PAYMENT_CONFIRMED',
+  SETTLED = 'SETTLED',
+  FAILED = 'FAILED',
+}
