@@ -8,6 +8,8 @@ import { DOCUMENT_AI_PROVIDER } from './document-ai/document-ai-provider.interfa
 import { SandboxDocumentAiProvider } from './document-ai/sandbox-document-ai.provider';
 import { PRICE_FEED_PROVIDER } from './price-feed/price-feed-provider.interface';
 import { SandboxPriceFeedProvider } from './price-feed/sandbox-price-feed.provider';
+import { FOREX_PROVIDER } from './forex/forex-provider.interface';
+import { SandboxForexProvider } from './forex/sandbox-forex.provider';
 import { StorageService } from './storage/storage.service';
 import { SearchService } from './search/search.service';
 
@@ -40,6 +42,10 @@ import { SearchService } from './search/search.service';
       provide: PRICE_FEED_PROVIDER,
       useClass: SandboxPriceFeedProvider,
     },
+    {
+      provide: FOREX_PROVIDER,
+      useClass: SandboxForexProvider,
+    },
     StorageService,
     SearchService,
   ],
@@ -48,6 +54,7 @@ import { SearchService } from './search/search.service';
     GOV_DATA_PROVIDER,
     DOCUMENT_AI_PROVIDER,
     PRICE_FEED_PROVIDER,
+    FOREX_PROVIDER,
     StorageService,
     SearchService,
   ],
