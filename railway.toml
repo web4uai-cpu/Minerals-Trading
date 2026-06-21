@@ -18,7 +18,7 @@ pnpm --filter @khanij/arbitration build && \
 pnpm --filter @khanij/blockchain build && \
 pnpm --filter @khanij/api build
 """
-startCmd = "node apps/api/dist/main.js"
+startCmd = "cd apps/api && node dist/main.js"
 
 [deploy]
 healthcheckPath = "/health"
