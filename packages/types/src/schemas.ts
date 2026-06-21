@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus } from './enums';
+import { OrgType, UserRole, DisputeCategory, ComplianceItemType, ComplianceItemStatus, AuctionType } from './enums';
 
 // ─── JWT ────────────────────────────────────────────────────────
 
@@ -187,6 +187,30 @@ export const CreateQuoteSchema = z.object({
 
 export type CreateQuoteInput = z.infer<typeof CreateQuoteSchema>;
 
+// ─── Auction / Bidding ──────────────────────────────────────────
+
+export const CreateAuctionSchema = z.object({
+  type: z.nativeEnum(AuctionType),
+  mineralId: z.string().uuid(),
+  grade: z.record(z.string(), z.number()),
+  quantity: z.number().positive(),
+  unit: z.enum(['MT', 'KG']),
+  reservePriceInPaise: z.string().regex(/^\d+$/).optional(),
+  startAt: z.string().datetime(),
+  endAt: z.string().datetime(),
+  antiSnipingMinutes: z.number().int().min(0).max(30).optional(),
+  minIncrementPaise: z.string().regex(/^\d+$/).optional(),
+});
+
+export type CreateAuctionInput = z.infer<typeof CreateAuctionSchema>;
+
+export const PlaceBidSchema = z.object({
+  auctionId: z.string().uuid(),
+  amountPaise: z.string().regex(/^\d+$/),
+});
+
+export type PlaceBidInput = z.infer<typeof PlaceBidSchema>;
+
 // ─── Dispute ────────────────────────────────────────────────────
 
 export const FileDisputeSchema = z.object({
@@ -196,6 +220,29 @@ export const FileDisputeSchema = z.object({
 });
 
 export type FileDisputeInput = z.infer<typeof FileDisputeSchema>;
+
+// ─── Contract Draft ────────────────────────────────────────────
+
+/** AI-generated contract draft output (Zod-validated output from Claude). */
+export const ContractDraftOutputSchema = z.object({
+  sections: z.array(z.object({
+    title: z.string(),
+    content: z.string(),
+  })),
+  summary: z.string(),
+  disclaimer: z.string(),
+});
+
+export type ContractDraftOutput = z.infer<typeof ContractDraftOutputSchema>;
+
+// ─── Notification ──────────────────────────────────────────────
+
+export const NotificationOutputSchema = z.object({
+  subject: z.string().max(200),
+  body: z.string().max(1000),
+});
+
+export type NotificationOutput = z.infer<typeof NotificationOutputSchema>;
 
 // ─── Common response envelope ───────────────────────────────────
 

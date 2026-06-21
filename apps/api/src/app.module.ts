@@ -9,6 +9,12 @@ import { ComplianceModule } from './compliance/compliance.module';
 import { CatalogModule } from './catalog/catalog.module';
 import { ListingsModule } from './listings/listings.module';
 import { DiscoveryModule } from './discovery/discovery.module';
+import { RfqModule } from './rfq/rfq.module';
+import { QuoteModule } from './quote/quote.module';
+import { DealModule } from './deals/deal.module';
+import { NotificationModule } from './notifications/notification.module';
+import { BiddingModule } from './bidding/bidding.module';
+import { InvoiceModule } from './invoice/invoice.module';
 
 @Module({
   imports: [
@@ -24,6 +30,12 @@ import { DiscoveryModule } from './discovery/discovery.module';
     CatalogModule,
     ListingsModule,
     DiscoveryModule,
+    RfqModule,
+    QuoteModule,
+    DealModule,
+    NotificationModule,
+    BiddingModule,
+    InvoiceModule,
   ],
   controllers: [HealthController],
   providers: [],

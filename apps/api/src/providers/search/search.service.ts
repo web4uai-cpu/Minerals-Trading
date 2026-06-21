@@ -1,30 +1,11 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from '@elastic/elasticsearch';
+import type { ListingDocument } from '@khanij/marketplace';
+
+export type { ListingDocument };
 
 const LISTING_INDEX = 'khanij_listings';
-
-/** Shape of a listing document in the ES index. */
-export interface ListingDocument {
-  listingId: string;
-  sellerOrgId: string;
-  sellerLegalName: string;
-  mineralId: string;
-  mineralName: string;
-  grade: Record<string, number>;
-  quantityAvailable: number;
-  unit: string;
-  askPriceInPaise: number;
-  location: {
-    district: string;
-    state: string;
-    lat?: number;
-    lng?: number;
-  };
-  dispatchLeadDays: number;
-  sellerTrustScore: number;
-  createdAt: string;
-}
 
 export interface SearchListingsQuery {
   mineralId?: string;

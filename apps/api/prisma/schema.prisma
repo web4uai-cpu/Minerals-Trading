@@ -59,6 +59,7 @@ model Organization {
   sellerQuotes       Quote[]        @relation("QuoteSellerOrg")
   buyerDeals         Deal[]         @relation("DealBuyerOrg")
   sellerDeals        Deal[]         @relation("DealSellerOrg")
+  auctions           Auction[]
 
   @@map("organizations")
 }
@@ -218,6 +219,7 @@ model Mineral {
 
   listings Listing[]
   rfqs     Rfq[]
+  auctions Auction[]
 
   @@map("minerals")
 }
@@ -445,4 +447,101 @@ model DealMessage {
 
   @@index([dealId, createdAt])
   @@map("deal_messages")
+}
+
+// ─── Auction / Bidding ────────────────────────────────────────────────────
+// Separate price-discovery channel alongside RFQ/Quote.
+
+enum AuctionStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  CANCELLED
+  AWARDED
+}
+
+enum AuctionType {
+  FORWARD        // seller auctions, highest bidder wins
+  REVERSE        // buyer auctions, lowest bidder wins
+}
+
+model Auction {
+  id                String        @id @default(uuid())
+  creatorOrgId      String
+  type              AuctionType
+  mineralId         String
+  grade             Json          // { "Fe%": 62, ... }
+  quantity          Decimal       @db.Decimal(12, 2)
+  unit              String        @default("MT")
+  reservePriceInPaise BigInt?     // minimum acceptable (forward) or max budget (reverse)
+  startAt           DateTime
+  endAt             DateTime
+  antiSnipingMinutes Int          @default(5) // extend endAt if bid in last N minutes
+  minIncrementPaise BigInt        @default(100) // minimum bid increment
+  status            AuctionStatus @default(DRAFT)
+  winningBidId      String?       @unique
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  creatorOrg Organization @relation(fields: [creatorOrgId], references: [id])
+  mineral    Mineral      @relation(fields: [mineralId], references: [id])
+  bids       Bid[]
+  winningBid Bid?         @relation("WinningBid", fields: [winningBidId], references: [id])
+
+  @@index([creatorOrgId])
+  @@index([mineralId])
+  @@index([status])
+  @@index([endAt])
+  @@map("auctions")
+}
+
+model Bid {
+  id             String   @id @default(uuid())
+  auctionId      String
+  bidderOrgId    String
+  bidderUserId   String
+  amountPaise    BigInt
+  createdAt      DateTime @default(now())
+
+  auction    Auction @relation(fields: [auctionId], references: [id])
+  wonAuction Auction? @relation("WinningBid")
+
+  @@index([auctionId, createdAt])
+  @@index([bidderOrgId])
+  @@map("bids")
+}
+
+// ─── Invoice ──────────────────────────────────────────────────────────────
+// Generated when deal reaches COMPLETED. Tax-compliant with GST breakdown.
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  CANCELLED
+}
+
+model Invoice {
+  id              String        @id @default(uuid())
+  dealId          String
+  invoiceNumber   String        @unique
+  status          InvoiceStatus @default(DRAFT)
+  sellerOrgId     String
+  buyerOrgId      String
+  subtotalPaise   BigInt
+  igstPaise       BigInt        @default(0)
+  cgstPaise       BigInt        @default(0)
+  sgstPaise       BigInt        @default(0)
+  totalTaxPaise   BigInt
+  grandTotalPaise BigInt
+  lineItems       Json          // InvoiceLineItem[]
+  gstRate         Float
+  isInterstate    Boolean
+  issuedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([dealId])
+  @@index([sellerOrgId])
+  @@index([buyerOrgId])
+  @@map("invoices")
 }

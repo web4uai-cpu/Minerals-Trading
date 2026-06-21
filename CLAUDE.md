@@ -31,11 +31,42 @@ JWT (15m access / 7d rotating refresh) · Argon2id · Docker → K8s · AWS ap-s
 ## Repo layout
 
 ```
-apps/{api,web,mobile}   packages/{types,ui,config}   infra/   docs/   .claude/skills/
+.ai/                    Repository operating system (constitution, standards, guardrails)
+governance/             Data dictionary, entity registry, tech debt, risk register
+testing/                Cross-cutting test strategy, fixtures, AI evals
+apps/{api,web,mobile}   Runtime applications
+packages/types          Shared Zod schemas (single source of truth)
+packages/ui             Shared React components
+packages/config         Shared build configs
+packages/compliance     Compliance domain (TrustScore, verification rules)
+packages/deals          Deal domain (state machine, escrow calculator)
+packages/marketplace    Marketplace domain (ranking, listing rules)
+packages/bidding        Bidding domain (auctions — Phase 5)
+packages/ai             AI domain (prompts, evaluators — Phase 6)
+packages/finance        Finance domain (invoicing, settlement — Phase 8)
+packages/logistics      Logistics domain (shipping, tracking — Phase 8)
+packages/arbitration    Arbitration domain (disputes, awards — Phase 9)
+packages/blockchain     Blockchain domain (evidence, anchoring — Phase 10)
+infra/                  Docker, K8s configs
+docs/                   Guides (backend, frontend, deployment, etc.)
+.claude/skills/         Claude Code domain skills
 ```
 
 `packages/types` is the **single source of truth** for types + Zod schemas —
 client and server both import from it.
+
+Domain packages (`packages/{domain}`) contain **pure business logic only** — no
+NestJS, no Prisma. NestJS modules in `apps/api/src/` import from them.
+
+## Repository governance
+
+Before making changes, consult:
+- `.ai/constitution/` — 10 immutable laws (superset of non-negotiables below)
+- `.ai/standards/` — coding, API, database, event, security standards
+- `.ai/context/BUILD_ORDER.md` — current build phase
+- `packages/{domain}/docs/` — domain documentation and specs
+- `.claude/skills/` — Claude Code domain skills (compliance, deals, etc.)
+- `governance/ENTITY_REGISTRY.md` — check before creating new models
 
 ## The 10 non-negotiables (apply to every change)
 

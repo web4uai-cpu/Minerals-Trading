@@ -69,6 +69,14 @@ export enum ListingStatus {
   SOLD_OUT = 'SOLD_OUT',
 }
 
+/** RFQ status. */
+export enum RfqStatus {
+  OPEN = 'OPEN',
+  QUOTED = 'QUOTED',
+  CLOSED = 'CLOSED',
+  CANCELLED = 'CANCELLED',
+}
+
 /** Quote status. */
 export enum QuoteStatus {
   SENT = 'SENT',
@@ -132,9 +140,31 @@ export enum DisputeStatus {
   WITHDRAWN = 'WITHDRAWN',
 }
 
+/** Auction status. */
+export enum AuctionStatus {
+  DRAFT = 'DRAFT',
+  OPEN = 'OPEN',
+  CLOSED = 'CLOSED',
+  CANCELLED = 'CANCELLED',
+  AWARDED = 'AWARDED',
+}
+
+/** Auction type — forward (seller auctions) or reverse (buyer auctions). */
+export enum AuctionType {
+  FORWARD = 'FORWARD',
+  REVERSE = 'REVERSE',
+}
+
 /** Deal room message sender type. */
 export enum MessageSenderType {
   BUYER = 'BUYER',
   SELLER = 'SELLER',
   AI = 'AI',
+}
+
+/** Invoice status. */
+export enum InvoiceStatus {
+  DRAFT = 'DRAFT',
+  ISSUED = 'ISSUED',
+  CANCELLED = 'CANCELLED',
 }

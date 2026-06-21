@@ -1,5 +1,8 @@
 # AI Agent Customization Guide - Minerals-Trading
 
+> **DEPRECATED** — This file is superseded by `.ai/guardrails/AGENTS.md`.
+> See `.ai/` for the current repository operating system.
+
 ## Project Overview
 
 **Minerals-Trading** is a universal mineral trading marketplace with arbitration capabilities. The platform enables buyers and sellers to trade mineral commodities, dispute resolution, and fair marketplace operations.

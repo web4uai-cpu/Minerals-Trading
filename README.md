@@ -67,19 +67,40 @@ Full rationale in [`ARCHITECTURE.md`](./ARCHITECTURE.md).
 
 ```
 khanij-nexus/
+├── .ai/                  # Repository Operating System
+│   ├── constitution/     #   10 immutable laws
+│   ├── standards/        #   Coding, API, DB, event, security standards
+│   ├── guardrails/       #   Rules for all AI coding agents
+│   ├── prompts/          #   Prompt registry
+│   ├── workflows/        #   Build & agent workflows
+│   ├── context/          #   Project manifest, build order
+│   └── memory/decisions/ #   ADR archive
+├── governance/           # Data dictionary, entity registry, tech debt, risks
+├── testing/              # Test strategy, AI evals, shared fixtures
 ├── apps/
-│   ├── api/          # NestJS backend
-│   ├── web/          # Next.js portal (buyer / seller / arbitrator)
-│   └── mobile/       # React Native (Expo)
+│   ├── api/              # NestJS backend (HTTP, DI, persistence)
+│   ├── web/              # Next.js portal (Phase 7)
+│   └── mobile/           # React Native / Expo (Phase 8)
 ├── packages/
-│   ├── types/        # Shared TS types + Zod schemas (single source of truth)
-│   ├── ui/           # Shared web components
-│   └── config/       # ESLint, tsconfig, tailwind preset
-├── infra/            # docker-compose, k8s manifests, terraform (later)
-├── docs/             # ADRs, data dictionary, compliance, API spec
-└── .claude/
-    └── skills/       # Agent skills — domain rules for Claude Code
+│   ├── types/            # Shared Zod schemas (single source of truth)
+│   ├── ui/               # Shared web components
+│   ├── config/           # ESLint, tsconfig, tailwind preset
+│   ├── compliance/       # Compliance domain (TrustScore, verification)
+│   ├── deals/            # Deal domain (state machine, escrow)
+│   ├── marketplace/      # Marketplace domain (ranking, listings)
+│   ├── bidding/          # Bidding domain (auctions — Phase 5)
+│   ├── ai/               # AI domain (prompts, evaluators — Phase 6)
+│   ├── finance/          # Finance domain (invoicing — Phase 8)
+│   ├── logistics/        # Logistics domain (shipping — Phase 8)
+│   ├── arbitration/      # Arbitration domain (disputes — Phase 9)
+│   └── blockchain/       # Blockchain domain (evidence — Phase 10)
+├── infra/                # docker-compose, k8s manifests, terraform
+├── docs/                 # Guides (backend, frontend, deployment)
+└── .claude/skills/       # Claude Code domain skills
 ```
+
+Domain packages contain **pure business logic only** (no NestJS, no Prisma).
+NestJS modules in `apps/api/src/` import domain logic from these packages.
 
 ---
 

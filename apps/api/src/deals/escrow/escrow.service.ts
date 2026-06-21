@@ -3,11 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuditService } from '../../common/services/audit.service';
 import { PaymentProvider, PAYMENT_PROVIDER } from '../../providers/payment/payment-provider.interface';
 import { EscrowEntryType } from '@prisma/client';
+import { Money } from '@khanij/types';
 
-/**
- * Escrow Service — append-only ledger for deal escrow operations.
- * Balance = Σ HELD − Σ RELEASED − Σ REFUNDED
- */
 @Injectable()
 export class EscrowService {
   constructor(
@@ -17,9 +14,8 @@ export class EscrowService {
     private readonly payment: PaymentProvider,
   ) {}
 
-  /** Hold funds for a deal. */
-  async holdFunds(dealId: string, amountPaise: number, userId: string): Promise<void> {
-    if (amountPaise <= 0) {
+  async holdFunds(dealId: string, amountPaise: bigint, userId: string): Promise<void> {
+    if (amountPaise <= 0n) {
       throw new BadRequestException({ code: 'INVALID_AMOUNT', message: 'Amount must be positive' });
     }
 
@@ -32,7 +28,7 @@ export class EscrowService {
       data: {
         dealId,
         type: EscrowEntryType.HELD,
-        amountPaise: BigInt(amountPaise),
+        amountPaise,
         txnRef: result.txnRef,
         note: result.message,
       },
@@ -43,17 +39,16 @@ export class EscrowService {
       action: 'escrow.hold',
       entityType: 'Deal',
       entityId: dealId,
-      after: { amountPaise, txnRef: result.txnRef },
+      after: { amountPaise: amountPaise.toString(), txnRef: result.txnRef },
     });
   }
 
-  /** Release escrowed funds to the seller. */
-  async releaseFunds(dealId: string, amountPaise: number, userId: string): Promise<void> {
+  async releaseFunds(dealId: string, amountPaise: bigint, userId: string): Promise<void> {
     const balance = await this.getBalance(dealId);
     if (amountPaise > balance) {
       throw new BadRequestException({
         code: 'INSUFFICIENT_ESCROW',
-        message: `Cannot release ₹${(amountPaise / 100).toFixed(2)} — only ₹${(balance / 100).toFixed(2)} held`,
+        message: `Cannot release ${Money.fromPaise(amountPaise).format()} — only ${Money.fromPaise(balance).format()} held`,
       });
     }
 
@@ -66,7 +61,7 @@ export class EscrowService {
       data: {
         dealId,
         type: EscrowEntryType.RELEASED,
-        amountPaise: BigInt(amountPaise),
+        amountPaise,
         txnRef: result.txnRef,
         note: result.message,
       },
@@ -77,17 +72,16 @@ export class EscrowService {
       action: 'escrow.release',
       entityType: 'Deal',
       entityId: dealId,
-      after: { amountPaise, txnRef: result.txnRef },
+      after: { amountPaise: amountPaise.toString(), txnRef: result.txnRef },
     });
   }
 
-  /** Refund escrowed funds to the buyer. */
-  async refundFunds(dealId: string, amountPaise: number, userId: string): Promise<void> {
+  async refundFunds(dealId: string, amountPaise: bigint, userId: string): Promise<void> {
     const balance = await this.getBalance(dealId);
     if (amountPaise > balance) {
       throw new BadRequestException({
         code: 'INSUFFICIENT_ESCROW',
-        message: `Cannot refund ₹${(amountPaise / 100).toFixed(2)} — only ₹${(balance / 100).toFixed(2)} held`,
+        message: `Cannot refund ${Money.fromPaise(amountPaise).format()} — only ${Money.fromPaise(balance).format()} held`,
       });
     }
 
@@ -100,7 +94,7 @@ export class EscrowService {
       data: {
         dealId,
         type: EscrowEntryType.REFUNDED,
-        amountPaise: BigInt(amountPaise),
+        amountPaise,
         txnRef: result.txnRef,
         note: result.message,
       },
@@ -111,41 +105,42 @@ export class EscrowService {
       action: 'escrow.refund',
       entityType: 'Deal',
       entityId: dealId,
-      after: { amountPaise, txnRef: result.txnRef },
+      after: { amountPaise: amountPaise.toString(), txnRef: result.txnRef },
     });
   }
 
-  /** Get escrow balance for a deal: Σ HELD − Σ RELEASED − Σ REFUNDED. */
-  async getBalance(dealId: string): Promise<number> {
+  async getBalance(dealId: string): Promise<bigint> {
     const entries = await this.prisma.escrowLedger.findMany({
       where: { dealId },
       select: { type: true, amountPaise: true },
     });
 
-    let balance = 0;
+    let balance = 0n;
     for (const entry of entries) {
-      const amount = Number(entry.amountPaise);
-      if (entry.type === EscrowEntryType.HELD) balance += amount;
-      else balance -= amount; // RELEASED or REFUNDED
+      if (entry.type === EscrowEntryType.HELD) balance += entry.amountPaise;
+      else balance -= entry.amountPaise;
     }
     return balance;
   }
 
-  /** Get full escrow ledger for a deal. */
   async getLedger(dealId: string) {
     const entries = await this.prisma.escrowLedger.findMany({
       where: { dealId },
       orderBy: { createdAt: 'asc' },
     });
     return entries.map((e) => ({
-      ...e,
-      amountPaise: Number(e.amountPaise),
+      id: e.id,
+      dealId: e.dealId,
+      type: e.type,
+      amountPaise: e.amountPaise.toString(),
+      txnRef: e.txnRef,
+      note: e.note,
+      createdAt: e.createdAt,
     }));
   }
 
-  /** Check if escrow is held (balance > 0). */
   async isEscrowHeld(dealId: string): Promise<boolean> {
     const balance = await this.getBalance(dealId);
-    return balance > 0;
+    return balance > 0n;
   }
 }
