@@ -50,19 +50,25 @@ Audit hash anchoring, evidence immutability, hash chain.
 ## Phase 11: AI Intelligence ✅ COMPLETE
 Price intelligence, fraud detection, compliance reviewer, notification content.
 
-## Phase 12: International Trade ← CURRENT
+## Phase 12: International Trade ✅ COMPLETE
+Trade eligibility rules, country sanctions/FTA, settlement state machine,
+forex provider, trade + settlement services with 84 tests.
+
+---
+
+## Phase 13: Web Frontend ← CURRENT
 **Status:** In Progress
 **Completed:**
-- TradeApplication model with clearance state machine (PENDING→APPLIED→APPROVED/REJECTED/EXPIRED)
-- Trade eligibility rules (IEC, org verification, restricted minerals)
-- Country trade rules (sanctions, FTA preferences, strategic minerals, DGFT licences)
-- CrossBorderSettlement model (forex lock, currency pairs, settlement status)
-- Settlement validation rules (currency pairs, amount limits, forex expiry)
-- TradeService + controller (CRUD, state transitions, audit-logged)
-- 65 tests (trade-rules 8, country-rules 11, settlement-rules 10, trade service 19, trust-score 17)
+- Auth layer (API client, JWT management, AuthContext, login/register pages)
+- App shell (sidebar nav, header, role-based menus, auth guard)
+- Dashboard, marketplace (AI search), deals list + detail, compliance,
+  trade placeholder, disputes placeholder
+- TypeScript strict, @khanij/ui components, Tailwind dark theme
 
 **Remaining:**
-- Settlement NestJS service + controller + tests
-- Forex rate integration via PriceFeedProvider stub
-- Trade document upload (S3/MinIO integration)
-- Web frontend trade application UI
+- Listings management page (SELLER/TRADER create/edit listings)
+- Trade application CRUD UI (link to deals, clearance flow)
+- Settlement flow UI (forex lock, payment tracking)
+- Compliance document upload UI (S3 presigned URLs)
+- Admin panel pages (user/org management, clearance approvals)
+- Mobile app (Expo) — Phase 14
