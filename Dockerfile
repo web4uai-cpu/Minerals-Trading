@@ -29,12 +29,24 @@ RUN pnpm install --frozen-lockfile
 COPY packages/ ./packages/
 COPY apps/api/ ./apps/api/
 
-# Generate Prisma client
+# Generate Prisma client (needed for API type imports)
 RUN cd apps/api && npx prisma generate
 
-# Build domain packages first, then API
+# Build @khanij/types first (all other packages depend on it)
 RUN pnpm --filter @khanij/types build
-RUN pnpm --filter @khanij/compliance build
+
+# Build all domain packages (they only depend on types)
+RUN pnpm --filter @khanij/compliance build && \
+    pnpm --filter @khanij/deals build && \
+    pnpm --filter @khanij/marketplace build && \
+    pnpm --filter @khanij/bidding build && \
+    pnpm --filter @khanij/ai build && \
+    pnpm --filter @khanij/finance build && \
+    pnpm --filter @khanij/logistics build && \
+    pnpm --filter @khanij/arbitration build && \
+    pnpm --filter @khanij/blockchain build
+
+# Build the API last
 RUN pnpm --filter @khanij/api build
 
 # ── Stage 2: Production Runtime ──────────────────────────────
