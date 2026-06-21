@@ -56,19 +56,21 @@ forex provider, trade + settlement services with 84 tests.
 
 ---
 
-## Phase 13: Web Frontend ← CURRENT
-**Status:** In Progress
-**Completed:**
-- Auth layer (API client, JWT management, AuthContext, login/register pages)
-- App shell (sidebar nav, header, role-based menus, auth guard)
-- Dashboard, marketplace (AI search), deals list + detail, compliance,
-  trade placeholder, disputes placeholder
-- TypeScript strict, @khanij/ui components, Tailwind dark theme
+## Phase 13: Web Frontend ✅ COMPLETE
+Auth layer, app shell, dashboard, marketplace (AI search), deals list + detail,
+listings CRUD, trade application CRUD, compliance upload (S3 presigned),
+admin panel (compliance review, trade clearance, settlements).
 
-**Remaining:**
-- Listings management page (SELLER/TRADER create/edit listings)
-- Trade application CRUD UI (link to deals, clearance flow)
-- Settlement flow UI (forex lock, payment tracking)
-- Compliance document upload UI (S3 presigned URLs)
-- Admin panel pages (user/org management, clearance approvals)
-- Mobile app (Expo) — Phase 14
+## Phase 14: Mobile App (Expo) ✅ COMPLETE
+Auth (AsyncStorage tokens, login/register), tab navigation (Dashboard,
+Marketplace, Deals, Compliance, Profile), AI search, deal cards,
+compliance checklist, dark theme matching web.
+
+---
+
+## What's next
+- End-to-end integration testing (API + web + mobile)
+- Real browser/device testing of all flows
+- Docker Compose for local full-stack dev
+- CI/CD pipeline (GitHub Actions)
+- Production deployment (AWS ap-south-1, K8s)
