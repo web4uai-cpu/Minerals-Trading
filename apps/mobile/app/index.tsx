@@ -1,60 +1,34 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useAuth } from '../src/context/auth-context';
 
-export default function HomeScreen() {
+export default function SplashScreen() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
+        router.replace('/(tabs)/dashboard');
+      } else {
+        router.replace('/login');
+      }
+    }
+  }, [isAuthenticated, isLoading]);
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.logo}>⬡</Text>
-        <Text style={styles.title}>Khanij Nexus</Text>
-        <Text style={styles.subtitle}>
-          India&apos;s AI-Powered Mineral Trade Platform
-        </Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Pre-Alpha</Text>
-        </View>
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.logo}>⬡</Text>
+      <Text style={styles.title}>Khanij Nexus</Text>
+      <ActivityIndicator color="#C9943A" style={styles.spinner} />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0D1117',
-  },
-  content: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  logo: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#C9943A',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#8B949E',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#30363D',
-    backgroundColor: '#161B22',
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#8B949E',
-  },
+  container: { flex: 1, backgroundColor: '#0D1117', alignItems: 'center', justifyContent: 'center' },
+  logo: { fontSize: 64, marginBottom: 16 },
+  title: { fontSize: 28, fontWeight: 'bold', color: '#C9943A', marginBottom: 24 },
+  spinner: { marginTop: 16 },
 });
