@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <Link href="/" className="no-underline hover:no-underline">
             <span className="text-4xl">⬡</span>
-            <h1 className="text-2xl font-bold mt-2 text-gradient-gold">Khanij Nexus</h1>
+            <h1 className="text-2xl font-bold mt-2 text-gradient-gold">Mineral Trade</h1>
           </Link>
           <p className="text-base-500 text-sm mt-2">Sign in to your trading account</p>
         </div>

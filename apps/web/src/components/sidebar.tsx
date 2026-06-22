@@ -41,7 +41,7 @@ export function Sidebar() {
         <Link href="/dashboard" className="flex items-center gap-2">
           <span className="text-2xl">⬡</span>
           <span className="text-lg font-bold bg-gradient-to-r from-accent-light to-accent bg-clip-text text-transparent">
-            Khanij Nexus
+            Mineral Trade
           </span>
         </Link>
       </div>

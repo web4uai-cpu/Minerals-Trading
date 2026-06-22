@@ -48,3 +48,4 @@ minio-data/
 # Misc
 *.tsbuildinfo
 .eslintcache
+.vercel
