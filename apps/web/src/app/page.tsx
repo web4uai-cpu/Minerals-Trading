@@ -41,6 +41,12 @@ export default function LandingPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link
+            href="/about"
+            className="px-4 py-2 text-sm font-medium text-base-500 hover:text-white transition-colors no-underline"
+          >
+            About
+          </Link>
+          <Link
             href="/login"
             className="px-4 py-2 text-sm font-medium text-base-500 hover:text-white transition-colors no-underline"
           >
